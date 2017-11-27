@@ -37,6 +37,102 @@ type Range struct {
 	step      float64
 }
 
+// NewRange evaluates the given input string and returns a Range struct
+func NewRange(inputString string) (*Range, error) {
+	var (
+		r           = &Range{step: 1.0}
+		contents    string
+		err         error
+		left, right string
+		step        string
+	)
+	// If the input string contains (" step "), remove the last part
+	if strings.Contains(inputString, " step ") {
+		elements := strings.SplitN(inputString, " step ", 2)
+		inputString = elements[0]
+		step = elements[1]
+	}
+	for _, c := range inputString {
+		switch c {
+		case ' ':
+			continue
+		case '\t':
+			continue
+		case '\n':
+			continue
+		case '[':
+			r.rangeType |= RANGE_INCLUDE_START
+		case ']':
+			r.rangeType |= RANGE_INCLUDE_STOP
+		case '(':
+			r.rangeType |= RANGE_EXCLUDE_START
+		case ')':
+			r.rangeType |= RANGE_EXCLUDE_STOP
+		default:
+			contents += string(c)
+		}
+	}
+	if strings.Count(contents, "..") == 1 {
+		// Ruby style range with ".."
+		elements := strings.SplitN(contents, "..", 2)
+		left = elements[0]
+		right = elements[1]
+		// Set both to inclusive, if not already set to exclusive in the switch above
+		if (r.rangeType & RANGE_EXCLUDE_START) == 0 {
+			r.rangeType |= RANGE_INCLUDE_START
+		}
+		if (r.rangeType & RANGE_EXCLUDE_STOP) == 0 {
+			r.rangeType |= RANGE_INCLUDE_STOP
+		}
+	} else if strings.Count(contents, ",") == 1 {
+		elements := strings.SplitN(contents, ",", 2)
+		left = elements[0]
+		right = elements[1]
+	} else if strings.Count(contents, ":") == 1 {
+		// Python style range, as in x[0:5]
+		elements := strings.SplitN(contents, ":", 2)
+		left = elements[0]
+		right = elements[1]
+		// Set the first one to inclusive and the second one to exclusive, like in Python
+		r.rangeType |= RANGE_INCLUDE_START
+		r.rangeType |= RANGE_EXCLUDE_STOP
+	} else if strings.Count(contents, ":") == 2 {
+		// Python style range with a step, as in x[0:5:-1]
+		elements := strings.SplitN(contents, ":", 3)
+		left = elements[0]
+		right = elements[1]
+		// Set the step, if not already set with a " step x" suffix
+		if step == "" {
+			step = elements[2]
+		}
+		// Set the first one to inclusive and the second one to exclusive, like in Python
+		r.rangeType |= RANGE_INCLUDE_START
+		r.rangeType |= RANGE_EXCLUDE_STOP
+	} else {
+		return nil, ErrRangeSyntax
+	}
+
+	if left == "" || right == "" {
+		return nil, ErrMissingRange
+	}
+
+	if r.from, err = strconv.ParseFloat(left, 64); err != nil {
+		return nil, errors.New("INVALID RANGE VALUE: " + left)
+	}
+
+	if r.to, err = strconv.ParseFloat(right, 64); err != nil {
+		return nil, errors.New("INVALID RANGE VALUE: " + right)
+	}
+
+	if step != "" {
+		if r.step, err = strconv.ParseFloat(step, 64); err != nil {
+			return nil, errors.New("INVALID STEP SIZE: " + step)
+		}
+	}
+
+	return r, nil
+}
+
 // IsInteger checks if the range has a step of 1
 func (r *Range) IsInteger() bool {
 	return r.step == 1.0
@@ -104,11 +200,8 @@ func (r *Range) ForEach(f func(float64)) {
 		}
 	}
 	if (r.rangeType & RANGE_INCLUDE_STOP) != 0 {
-		diff := x - r.to
-		// If the remaining distance to the goal is smaller than half a step, use the goal value
-		if abs(diff) < abs(r.step)/2.0 {
-			f(r.to)
-		}
+		// But first check that it is within range
+		f(r.to)
 	}
 }
 
@@ -147,116 +240,8 @@ func (r *Range) ForN(n int, f func(float64)) {
 		}
 	}
 	if (r.rangeType & RANGE_INCLUDE_STOP) != 0 {
-		diff := x - r.to
-		// If the remaining distance to the goal is smaller than half a step, use the goal value
-		if abs(diff) < abs(r.step)/2.0 {
-			f(r.to)
-		}
+		f(r.to)
 	}
-}
-
-// NewRange evaluates the given input string and returns a Range struct
-func NewRange(inputString string) (*Range, error) {
-	var (
-		r           = &Range{step: 1.0}
-		contents    string
-		err         error
-		left, right string
-		step        string
-	)
-	// If the input string contains (" step "), remove the last part
-	if strings.Contains(inputString, " step ") {
-		elements := strings.SplitN(inputString, " step ", 2)
-		inputString = elements[0]
-		step = elements[1]
-	}
-	for _, c := range inputString {
-		switch c {
-		case ' ':
-			continue
-		case '\t':
-			continue
-		case '\n':
-			continue
-		case '[':
-			r.rangeType |= RANGE_INCLUDE_START
-		case ']':
-			r.rangeType |= RANGE_INCLUDE_STOP
-		case '(':
-			r.rangeType |= RANGE_EXCLUDE_START
-		case ')':
-			r.rangeType |= RANGE_EXCLUDE_STOP
-		default:
-			contents += string(c)
-		}
-	}
-	if strings.Count(contents, "..") == 1 {
-		// Ruby style range with ".."
-		elements := strings.SplitN(contents, "..", 2)
-		left = elements[0]
-		right = elements[1]
-		// Set both to inclusive, if not already set to exclusive in the switch above
-		if (r.rangeType & RANGE_EXCLUDE_START) == 0 {
-			r.rangeType |= RANGE_INCLUDE_START
-		}
-		if (r.rangeType & RANGE_EXCLUDE_STOP) == 0 {
-			r.rangeType |= RANGE_INCLUDE_STOP
-		}
-	} else if strings.Count(contents, ",") == 1 {
-		elements := strings.SplitN(contents, ",", 2)
-		left = elements[0]
-		right = elements[1]
-	} else if strings.Count(contents, ":") == 1 {
-		// Python style range, as in x[0:5]
-		elements := strings.SplitN(contents, ":", 2)
-		left = elements[0]
-		right = elements[1]
-		// Set the first one to inclusive and the second one to exclusive, if not already set otherwise
-		if (r.rangeType & RANGE_EXCLUDE_START) == 0 {
-			r.rangeType |= RANGE_INCLUDE_START
-		}
-		if (r.rangeType & RANGE_INCLUDE_STOP) == 0 {
-			r.rangeType |= RANGE_EXCLUDE_STOP
-		}
-	} else if strings.Count(contents, ":") == 2 {
-		// Python style range with a step, as in x[0:5:-1]
-		elements := strings.SplitN(contents, ":", 3)
-		left = elements[0]
-		right = elements[1]
-		// Set the step, if not already set with a " step x" suffix
-		if step == "" {
-			step = elements[2]
-		}
-		// Set the first one to inclusive and the second one to exclusive, if not already set otherwise
-		if (r.rangeType & RANGE_EXCLUDE_START) == 0 {
-			r.rangeType |= RANGE_INCLUDE_START
-		}
-		if (r.rangeType & RANGE_INCLUDE_STOP) == 0 {
-			r.rangeType |= RANGE_EXCLUDE_STOP
-		}
-	} else {
-		return nil, ErrRangeSyntax
-	}
-
-	if left == "" || right == "" {
-		return nil, ErrMissingRange
-	}
-
-	if r.from, err = strconv.ParseFloat(left, 64); err != nil {
-		return nil, errors.New("INVALID RANGE VALUE: " + left)
-	}
-
-	if r.to, err = strconv.ParseFloat(right, 64); err != nil {
-		return nil, errors.New("INVALID RANGE VALUE: " + right)
-	}
-
-	if step != "" {
-		if r.step, err = strconv.ParseFloat(step, 64); err != nil {
-			return nil, errors.New("INVALID STEP SIZE: " + step)
-		}
-	}
-
-	return r, nil
 }
 
 // MustRange ris the same as NewRange, but panics if given an invalid input string
