@@ -1,4 +1,4 @@
-package range2
+package rangetype
 
 import (
 	"errors"
@@ -25,6 +25,10 @@ var (
 	ErrMissingRange = errors.New("MISSING RANGE VALUES")
 )
 
+// Range can represent a number type in a programming language
+// For example:
+// An uint8 can be [0, 256) step 1
+// A float between 0 and 1 can be [0, 1] step 0.01
 type Range struct {
 	rangeType uint8 // inclusive or exclusive start and stop
 	from      float64
@@ -48,7 +52,7 @@ func (r *Range) String() string {
 		s += "["
 	}
 
-	s += fmt.Sprintf("%v %v", r.from, r.to)
+	s += fmt.Sprintf("%v, %v", r.from, r.to)
 
 	switch r.rangeType {
 	case RANGE_INCLUDE_EXCLUDE, RANGE_EXCLUDE_EXCLUDE:
@@ -62,9 +66,9 @@ func (r *Range) String() string {
 	// The idea is to use a range to specify a number type in a future programming language.
 	// By specifying a range with a step, all ints/floats/uints/bytes can be clearly defined in one single unified way.
 	if r.IsInteger() {
-		s += ", integer"
+		s += ", integer range"
 	} else {
-		s += fmt.Sprintf(", float with step %v", r.step)
+		s += fmt.Sprintf(", float range with step %v", r.step)
 	}
 
 	return s
@@ -157,7 +161,14 @@ func NewRange(inputString string) (*Range, error) {
 		contents    string
 		err         error
 		left, right string
+		step        string
 	)
+	// If the input string contains (" step "), remove the last part
+	if strings.Contains(inputString, " step ") {
+		elements := strings.SplitN(inputString, " step ", 2)
+		inputString = elements[0]
+		step = elements[1]
+	}
 	for _, c := range inputString {
 		switch c {
 		case ' ':
@@ -211,9 +222,9 @@ func NewRange(inputString string) (*Range, error) {
 		elements := strings.SplitN(contents, ":", 3)
 		left = elements[0]
 		right = elements[1]
-		step := elements[2]
-		if r.step, err = strconv.ParseFloat(step, 64); err != nil {
-			return nil, errors.New("INVALID STEP SIZE: " + step)
+		// Set the step, if not already set with a " step x" suffix
+		if step == "" {
+			step = elements[2]
 		}
 		// Set the first one to inclusive and the second one to exclusive, if not already set otherwise
 		if (r.rangeType & RANGE_EXCLUDE_START) == 0 {
@@ -238,6 +249,12 @@ func NewRange(inputString string) (*Range, error) {
 		return nil, errors.New("INVALID RANGE VALUE: " + right)
 	}
 
+	if step != "" {
+		if r.step, err = strconv.ParseFloat(step, 64); err != nil {
+			return nil, errors.New("INVALID STEP SIZE: " + step)
+		}
+	}
+
 	return r, nil
 }
 
@@ -250,13 +267,45 @@ func MustRange(inputString string) *Range {
 	return r
 }
 
-// Slice returns a slice of numbers, generated from the range
-func (r *Range) Slice() []float64 {
+// All returns a slice of numbers, generated from the range
+func (r *Range) All() []float64 {
 	var xs []float64
 	r.ForEach(func(x float64) {
 		xs = append(xs, x)
 	})
 	return xs
+}
+
+// Slice can be used to slice a slice with a range
+func Slice(nums []float64, expression string) ([]float64, error) {
+	r, err := NewRange(expression)
+	if err != nil {
+		return []float64{}, err
+	}
+	var selection []float64
+	var pos int
+	r.ForEach(func(x float64) {
+		pos = int(x)
+		if pos < len(nums) {
+			selection = append(selection, nums[pos])
+		}
+	})
+	return selection, nil
+}
+
+// MustSlice can be used to slice a slice with a range
+// Will panic if the given expresion is invalid
+func MustSlice(nums []float64, expression string) []float64 {
+	r := MustRange(expression)
+	var selection []float64
+	var pos int
+	r.ForEach(func(x float64) {
+		pos = int(x)
+		if pos < len(nums) {
+			selection = append(selection, nums[pos])
+		}
+	})
+	return selection
 }
 
 // Take returns a slice of n numbers, generated from the range.
