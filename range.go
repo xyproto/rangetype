@@ -1,6 +1,7 @@
 package rangetype
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
@@ -316,4 +317,20 @@ func (r *Range) Take(n int) []float64 {
 		xs = append(xs, x)
 	})
 	return xs
+}
+
+// Join returns the output from the range as a string, where elements are separated by sep
+func (r *Range) Join(sep string, digits int) string {
+	numDigits := strconv.Itoa(digits) // Digits after "."
+
+	var buf bytes.Buffer
+	r.ForEach(func(x float64) {
+		buf.WriteString(fmt.Sprintf("%."+numDigits+"f"+sep, x))
+	})
+	s := buf.String()
+	lens := len(s)
+	if lens > len(sep) {
+		return s[:lens-len(sep)]
+	}
+	return s
 }
