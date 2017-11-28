@@ -1,8 +1,8 @@
 package rangetype
 
 import (
-	"strconv"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/bmizerany/assert"
