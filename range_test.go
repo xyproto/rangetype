@@ -81,4 +81,6 @@ func TestRange(t *testing.T) {
 	assert.Equal(t, MustRange("[3:1:-1]").All(), []float64{3.0, 2.0, 1.0})
 	assert.Equal(t, MustRange("[3:1:-1)").All(), []float64{3.0, 2.0})
 	assert.Equal(t, MustRange("3:1:-1").All(), []float64{3.0, 2.0})
+
+	assert.Equal(t, MustRange("1..3 step 0.5").Join(";", 2), "1.00;1.50;2.00;2.50;3.00")
 }
