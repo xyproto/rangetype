@@ -14,11 +14,6 @@ const (
 	RANGE_INCLUDE_START
 	RANGE_EXCLUDE_STOP
 	RANGE_INCLUDE_STOP
-
-	RANGE_INCLUDE_INCLUDE = RANGE_INCLUDE_START | RANGE_INCLUDE_STOP
-	RANGE_INCLUDE_EXCLUDE = RANGE_INCLUDE_START | RANGE_EXCLUDE_STOP
-	RANGE_EXCLUDE_INCLUDE = RANGE_EXCLUDE_START | RANGE_INCLUDE_STOP
-	RANGE_EXCLUDE_EXCLUDE = RANGE_EXCLUDE_START | RANGE_EXCLUDE_STOP
 )
 
 var (
@@ -31,7 +26,7 @@ var (
 // An uint8 can be [0, 256) step 1
 // A float between 0 and 1 can be [0, 1] step 0.01
 type Range struct {
-	rangeType uint8 // inclusive or exclusive start and stop
+	rangeType int // inclusive or exclusive start and stop
 	from      float64
 	to        float64
 	step      float64
@@ -62,12 +57,16 @@ func NewRange(inputString string) (*Range, error) {
 			continue
 		case '[':
 			r.rangeType |= RANGE_INCLUDE_START
+			r.rangeType &= ^RANGE_EXCLUDE_START
 		case ']':
 			r.rangeType |= RANGE_INCLUDE_STOP
+			r.rangeType &= ^RANGE_EXCLUDE_STOP
 		case '(':
 			r.rangeType |= RANGE_EXCLUDE_START
+			r.rangeType &= ^RANGE_INCLUDE_START
 		case ')':
 			r.rangeType |= RANGE_EXCLUDE_STOP
+			r.rangeType &= ^RANGE_INCLUDE_STOP
 		default:
 			contents += string(c)
 		}
@@ -80,9 +79,11 @@ func NewRange(inputString string) (*Range, error) {
 		// Set both to inclusive, if not already set to exclusive in the switch above
 		if (r.rangeType & RANGE_EXCLUDE_START) == 0 {
 			r.rangeType |= RANGE_INCLUDE_START
+			r.rangeType &= ^RANGE_EXCLUDE_START
 		}
 		if (r.rangeType & RANGE_EXCLUDE_STOP) == 0 {
 			r.rangeType |= RANGE_INCLUDE_STOP
+			r.rangeType &= ^RANGE_EXCLUDE_STOP
 		}
 	} else if strings.Count(contents, ",") == 1 {
 		elements := strings.SplitN(contents, ",", 2)
@@ -93,9 +94,16 @@ func NewRange(inputString string) (*Range, error) {
 		elements := strings.SplitN(contents, ":", 2)
 		left = elements[0]
 		right = elements[1]
-		// Set the first one to inclusive and the second one to exclusive, like in Python
-		r.rangeType |= RANGE_INCLUDE_START
-		r.rangeType |= RANGE_EXCLUDE_STOP
+		// Set the first one to inclusive and the second one to exclusive, like in Python -
+		// if not already set in the switch above.
+		if (r.rangeType & RANGE_INCLUDE_START) == 0 { // no inclusive start defined
+			r.rangeType |= RANGE_INCLUDE_START
+			r.rangeType &= ^RANGE_EXCLUDE_START
+		}
+		if (r.rangeType & RANGE_INCLUDE_STOP) == 0 { // no inclusive stop defined
+			r.rangeType |= RANGE_EXCLUDE_STOP
+			r.rangeType &= ^RANGE_INCLUDE_STOP
+		}
 	} else if strings.Count(contents, ":") == 2 {
 		// Python style range with a step, as in x[0:5:-1]
 		elements := strings.SplitN(contents, ":", 3)
@@ -105,9 +113,16 @@ func NewRange(inputString string) (*Range, error) {
 		if step == "" {
 			step = elements[2]
 		}
-		// Set the first one to inclusive and the second one to exclusive, like in Python
-		r.rangeType |= RANGE_INCLUDE_START
-		r.rangeType |= RANGE_EXCLUDE_STOP
+		// Set the first one to inclusive and the second one to exclusive, like in Python -
+		// if not already set in the switch above.
+		if (r.rangeType & RANGE_INCLUDE_START) == 0 { // no inclusive start defined
+			r.rangeType |= RANGE_INCLUDE_START
+			r.rangeType &= ^RANGE_EXCLUDE_START
+		}
+		if (r.rangeType & RANGE_INCLUDE_STOP) == 0 { // no inclusive stop defined
+			r.rangeType |= RANGE_EXCLUDE_STOP
+			r.rangeType &= ^RANGE_INCLUDE_STOP
+		}
 	} else {
 		return nil, ErrRangeSyntax
 	}
@@ -141,21 +156,18 @@ func (r *Range) IsInteger() bool {
 // String returns the range as a string where "[" means inclusive and "(" means exclusive
 func (r *Range) String() string {
 	s := ""
-	switch r.rangeType {
-	case RANGE_EXCLUDE_EXCLUDE, RANGE_EXCLUDE_INCLUDE:
+
+	if (r.rangeType & RANGE_EXCLUDE_START) != 0 {
 		s += "("
-	default:
-		//case RANGE_INCLUDE_EXCLUDE, RANGE_INCLUDE_INCLUDE:
+	} else {
 		s += "["
 	}
 
 	s += fmt.Sprintf("%v, %v", r.from, r.to)
 
-	switch r.rangeType {
-	case RANGE_INCLUDE_EXCLUDE, RANGE_EXCLUDE_EXCLUDE:
+	if (r.rangeType & RANGE_EXCLUDE_STOP) != 0 {
 		s += ")"
-	default:
-		//case RANGE_INCLUDE_INCLUDE, RANGE_EXCLUDE_INCLUDE:
+	} else {
 		s += "]"
 	}
 
