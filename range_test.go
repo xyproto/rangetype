@@ -77,4 +77,8 @@ func TestRange(t *testing.T) {
 	assert.Equal(t, MustRange("(2,15) step 4").All(), []float64{6, 10, 14})
 	assert.Equal(t, MustSlice([]float64{1.0, 2.0, 3.0, 4.0}, "1..3 step 2"), []float64{2.0, 4.0})
 	assert.Equal(t, MustSlice([]float64{1.0, 2.0, 3.0, 4.0}, "(0,3)"), []float64{2.0, 3.0})
+
+	assert.Equal(t, MustRange("[3:1:-1]").All(), []float64{3.0, 2.0, 1.0})
+	assert.Equal(t, MustRange("[3:1:-1)").All(), []float64{3.0, 2.0})
+	assert.Equal(t, MustRange("3:1:-1").All(), []float64{3.0, 2.0})
 }
