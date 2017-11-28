@@ -5,7 +5,7 @@ A mini-language for ranges
 # Example
 
 
-```
+```go
 package main
 
 import (
