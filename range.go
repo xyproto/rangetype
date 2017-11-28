@@ -268,3 +268,11 @@ func (r *Range) Take(n int) []float64 {
 	})
 	return xs
 }
+
+func (r *Range) Sum() float64 {
+	var sum float64
+	r.ForEach(func(x float64) {
+		sum += x
+	})
+	return sum
+}
