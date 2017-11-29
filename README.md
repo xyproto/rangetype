@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/xyproto/rangetype.svg?branch=master)](https://travis-ci.org/xyproto/rangetype) [![GoDoc](https://godoc.org/github.com/xyproto/rangetype?status.svg)](http://godoc.org/github.com/xyproto/rangetype) [![License](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/xyproto/rangetype/master/LICENSE) [![Report Card](https://img.shields.io/badge/go_report-A+-brightgreen.svg?style=flat)](http://goreportcard.com/report/xyproto/rangetype)
 
-A mini-language for defining ranges.
+A mini-language for defining numeric types by defining ranges.
 
 The idea is to provide a DSL for defining and validating numeric types for implementations of programming languages.
 
