@@ -23,11 +23,11 @@ func main() {
 	// Define a new type that can hold numbers from 0 up to and including 99
 	SmallInt := r.New("0..99")
 
-	// Another way to define a number type from 0 up to and including 99
-	//SmallInt := New("10**2~")
-
-	// Another way to define a type from 0 up to and including 99
+	// Another way to define a number type from 0 up to and excluding 100
 	//SmallInt := New("[0,100)")
+
+	// Another way to define a number type from 0 up to and excluding 100
+	//SmallInt := New("10**2~")
 
 	// Is 42 a valid SmallInt?
 	fmt.Println("0 is a valid SmallInt value:", SmallInt.Valid(0))
