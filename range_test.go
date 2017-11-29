@@ -144,6 +144,9 @@ func TestMinusOneOperator(t *testing.T) {
 	r, err := New2("[1~..4~~**2)") // From 0 up to, but not including, 4
 	assert.Equal(t, err, nil)
 	assert.Equal(t, r.Len(), 4)
+
+	IntType := r.New("2**16~") // from 0 up to and including 65536-1
+	assert.Equal(t, IntType.Valid(42), true)
 }
 
 func TestFloatBits(t *testing.T) {

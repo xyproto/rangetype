@@ -11,12 +11,12 @@ import (
 
 var (
 	// Unsigned integers
-	U4   = New("..2**4~")
-	U8   = New("..2**8~")
-	U16  = New("..2**16~")
-	U32  = New("..2**32~")
-	U64  = New("..2**64~")
-	U128 = New("..2**128~")
+	U4   = New("2**4~")
+	U8   = New("2**8~")
+	U16  = New("2**16~")
+	U32  = New("2**32~")
+	U64  = New("2**64~")
+	U128 = New("2**128~")
 
 	// Aliases for unsigned integers
 	Nibble = U4
