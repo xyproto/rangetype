@@ -179,10 +179,13 @@ func eval(exp string) (retval float64, err error) {
 		return retval, nil
 	}
 	if strings.HasSuffix(exp, "~") {
-		// Start out with a value of -1
-		retval = -1.0
-		// Remove "~" from the expression
-		exp = exp[:len(exp)-1]
+		// Evaluate the expression with "~" removed
+		var v float64
+		if v, err = eval(exp[:len(exp)-1]); err != nil {
+			return v, err
+		}
+		// Return the result of the evaluated expression, but subtract 1
+		return v - 1, nil
 	}
 	if strings.Count(exp, "**") > 0 {
 		elements := strings.SplitN(exp, "**", 2)
@@ -594,9 +597,20 @@ func (r *Range) Sum() float64 {
 
 // Len returns the length of the range by iterating over it!
 // May get stuck if the range is impossibly large.
-func (r *Range) Len() uint64 {
+func (r *Range) Len64() uint64 {
 	// TODO: Optimize for ranges where there is no need to actually iterate
 	var counter uint64
+	r.ForEach(func(_ float64) {
+		counter++
+	})
+	return counter
+}
+
+// Len returns the length of the range by iterating over it!
+// May get stuck if the range is impossibly large.
+func (r *Range) Len() int {
+	// TODO: Optimize for ranges where there is no need to actually iterate
+	var counter int
 	r.ForEach(func(_ float64) {
 		counter++
 	})
