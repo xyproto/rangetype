@@ -10,19 +10,29 @@ It can also be used for iterating over ranges, generating lists of numbers or sl
 
 ## Sample syntax
 
-A range from 1 to 3 that includes both 1, 2 and 3:
+An int with a range from 1 to 3 that includes both 1, 2 and 3:
+
+`1,3`
+
+A float with a range from 1 to 3 that includes 1.0, 1.1 etc up to 3.0:
+
+`1,3 step 0.1`
+
+Inclusivity is specified with square brackets:
 
 `[1,3]`
 
-The default is inclusive, so the above is the same as just:
+Exclusivity is specified with parenthesis:
 
-`1,3`
+`(1,3)`
 
 Ranges inspired by Ruby also work:
 
 `1..3`
 
-These are also inclusive, unless a `(`, `)` or both are used. This will exclude `1` and `3` and keep only `2`:
+These are inclusive, unless parenthesis are used.
+
+Ruby-style range which will exclude `1` and `3` and only keep `2`:
 
 `(1..3)`
 
@@ -30,17 +40,21 @@ Python style ranges are also supported, where the start value is inclusive and t
 
 `1:3`
 
-This is a range of only `1` and `2`, the `3` is excluded. However, this will include both `1` and `3`:
+Adding square brackets makes the range inclusive:
 
 `[1:3]`
 
-Adding an iteration step is also supported:
+Brackets and parenthesis does not have to be balanced. This works too:
+
+`1:3]`
+
+Adding an iteration step is also possible:
 
 `1..5 step 2`
 
 This is a range with the numbers `1`, `3` and `5`.
 
-Using the Python-style syntax also supports steps:
+The Python-style syntax also supports steps:
 
 `[3:1:-1]`
 
@@ -52,6 +66,8 @@ Steps does not have to be integers:
 
 This steps from 3 (inclusive) down to 1 (inclusive) in step sizes of 0.1.
 
+## ForEach
+
 Looping over a range can be done by providing a function that takes a `float64`:
 
 ```
@@ -59,6 +75,8 @@ r.New("1..10").ForEach(func(x float64) {
   fmt.Println(int(x))
 })
 ```
+
+## Join
 
 Collecting integers to a comma separated string can be done with `Join`:
 
@@ -84,7 +102,10 @@ And can end with:
 
 * `]` for including the last value in the range, or
 * `)` for excluding the last value in the range
-* `~` for subtracting 1 from the preceeding number
+
+Numbers can be suffixed by:
+
+* `~` for subtracting 1 from the preceding number. Any number of `~` is possible.
 
 The ranges can be Python-style:
 
@@ -102,9 +123,17 @@ Ruby-style with a step:
 
 `1..10 step 2`
 
-Or math-style:
+Math-style:
 
 `[1,5)`
+
+Math-style with a step:
+
+`(5,1] step -0.1`
+
+Or with powers. Here's an expression for specifying a 16-bit unsigned integer:
+
+`..2**16~"`
 
 ## More examples
 
