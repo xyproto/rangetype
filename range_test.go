@@ -145,7 +145,7 @@ func TestMinusOneOperator(t *testing.T) {
 	assert.Equal(t, err, nil)
 	assert.Equal(t, r.Len(), 4)
 
-	IntType := r.New("2**16~") // from 0 up to and including 65536-1
+	IntType := New("..2**16~") // from 0 up to and including 65536-1
 	assert.Equal(t, IntType.Valid(42), true)
 }
 

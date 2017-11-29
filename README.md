@@ -143,14 +143,14 @@ This can also be defined by dropping the initial `0` and using `~` for `-1`:
 
 `..65536~`
 
-This can be reduced further by dropping `..` and using `2**16` instead of `65536`:
+This can be made clearer (when defining many numbers of many bit-sizes) by using `2**16` instead of `65536`:
 
-`2**16~`
+`..2**16~`
 
 This can be used for validating if a given number fits a 16-bit unsigned type:
 
 ```go
-IntType := r.New("2**16~")     // from 0 up to and including 65536-1
+IntType := r.New("..2**16~")     // from 0 up to and including 65536-1
 IntType.Valid(42)              // true
 ```
 
@@ -172,10 +172,10 @@ func main() {
 	SmallInt := r.New("0..99")
 
 	// Another way to define a number type from 0 up to and excluding 100
-	//SmallInt := New("[0,100)")
+	//SmallInt := r.New("[0,100)")
 
 	// Another way to define a number type from 0 up to and excluding 100
-	//SmallInt := New("10**2~")
+	//SmallInt := r.New("..10**2~")
 
 	// Is 42 a valid SmallInt?
 	fmt.Println("0 is a valid SmallInt value:", SmallInt.Valid(0))
