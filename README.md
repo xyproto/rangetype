@@ -135,15 +135,23 @@ Math-style with a step:
 
 `(5,1] step -0.1`
 
-Or with powers. Here's an expression for specifying the range for a 16-bit unsigned integer:
+Here's an expression for specifying the range for a 16-bit unsigned integer:
 
-`..2**16~`
+`0..65535`
 
-This can be used for validating if a number fits the type:
+This can also be defined by dropping the initial `0` and using `~` for `-1`:
+
+`..65536~`
+
+This can be reduced further by dropping `..` and using `2**16` instead of `65536`:
+
+`2**16~`
+
+This can be used for validating if a given number fits a 16-bit unsigned type:
 
 ```go
-IntType := r.New("..2**16~")     // from 0 up to and including 65536-1
-IntType.Valid(42)                // true
+IntType := r.New("2**16~")     // from 0 up to and including 65536-1
+IntType.Valid(42)              // true
 ```
 
 ## More examples
