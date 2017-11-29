@@ -562,19 +562,25 @@ func (r *Range) Take(n int) []float64 {
 }
 
 // Join returns the output from the range as a string, where elements are separated by sep
+// digits are how many digits should be added to the fractional part of the floats,
+// use 0 for integers
 func (r *Range) Join(sep string, digits int) string {
-	numDigits := strconv.Itoa(digits) // Digits after "."
-
 	var buf bytes.Buffer
 	r.ForEach(func(x float64) {
-		buf.WriteString(fmt.Sprintf("%."+numDigits+"f"+sep, x))
+		buf.WriteString(strconv.FormatFloat(x, 'f', digits, 64))
+		buf.WriteString(sep)
 	})
-	s := buf.String()
-	lens := len(s)
-	if lens > len(sep) {
-		return s[:lens-len(sep)]
+	if buf.Len() == 0 {
+		return ""
 	}
-	return s
+	// Return everything but the trailing separator
+	s := buf.String()
+	return s[:len(s)-len(sep)]
+}
+
+// JoinInts returns the output from the range as a string, where elements are separated by sep
+func (r *Range) JoinInts(sep string) string {
+	return r.Join(sep, 0)
 }
 
 // Sum adds all numbers in a range
