@@ -43,6 +43,12 @@ func TestPythonStyleRanges(t *testing.T) {
 	})
 	s = s[:len(s)-1]
 	assert.Equal(t, s, "4.0 3.9 3.8 3.7 3.6 3.5 3.4 3.3 3.2 3.1 3.0 2.9 2.8 2.7 2.6 2.5 2.4 2.3 2.2 2.1 2.0")
+
+	// Exclusive end
+	assert.Equal(t, New("0:3").All(), []float64{0.0, 1.0, 2.0})
+
+	// Inclusive end
+	assert.Equal(t, New("0:3]").All(), []float64{0.0, 1.0, 2.0, 3.0})
 }
 
 func TestSum(t *testing.T) {
