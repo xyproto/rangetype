@@ -70,7 +70,7 @@ This steps from 3 (inclusive) down to 1 (inclusive) in step sizes of 0.1.
 
 Looping over a range can be done by providing a function that takes a `float64`:
 
-```
+```go
 r.New("1..10").ForEach(func(x float64) {
   fmt.Println(int(x))
 })
@@ -80,11 +80,15 @@ r.New("1..10").ForEach(func(x float64) {
 
 Collecting integers to a comma separated string can be done with `Join`:
 
-    r.New("1..10").Join(", ", 0)
+```go
+r.New("1..10").Join(", ", 0)
+```
 
 Or for floats, with 2 digits after the period, separated by semicolons:
 
-    r.New("1..3 step 0.5").Join(";", 2)
+```go
+r.New("1..3 step 0.5").Join(";", 2)
+```
 
 ## Features and limitations
 
