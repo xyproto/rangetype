@@ -43,6 +43,7 @@ And can end with:
 
 * `]` for including the last value in the range, or
 * `)` for excluding the last value in the range
+* `~` for excluding the last value in the range (extracts 1 from the number)
 
 An example of a range from 1 to 3 that includes both 1, 2 and 3 is:
 
