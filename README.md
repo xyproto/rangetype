@@ -8,7 +8,105 @@ The idea is to provide a DSL for defining and validating numeric types for imple
 
 It can also be used for iterating over ranges, generating lists of numbers or slicing a given slice (like slices in Python).
 
-## Example 1
+## Sample syntax
+
+A range from 1 to 3 that includes both 1, 2 and 3:
+
+`[1,3]`
+
+The default is inclusive, so the above is the same as just:
+
+`1,3`
+
+Ranges inspired by Ruby also work:
+
+`1..3`
+
+These are also inclusive, unless a `(`, `)` or both are used. This will exclude `1` and `3` and keep only `2`:
+
+`(1..3)`
+
+Python style ranges are also supported, where the start value is inclusive and the end value is exclusive:
+
+`1:3`
+
+This is a range of only `1` and `2`, the `3` is excluded. However, this will include both `1` and `3`:
+
+`[1:3]`
+
+Adding an iteration step is also supported:
+
+`1..5 step 2`
+
+This is a range with the numbers `1`, `3` and `5`.
+
+Using the Python-style syntax also supports steps:
+
+`[3:1:-1]`
+
+This is `3`, `2`, `1`.
+
+Steps does not have to be integers:
+
+`[3:1:-0.1]`
+
+This steps from 3 (inclusive) down to 1 (inclusive) in step sizes of 0.1.
+
+Looping over a range can be done by providing a function that takes a `float64`:
+
+```
+r.New("1..10").ForEach(func(x float64) {
+  fmt.Println(int(x))
+})
+```
+
+Collecting integers to a comma separated string can be done with `Join`:
+
+    r.New("1..10").Join(", ", 0)
+
+Or for floats, with 2 digits after the period, separated by semicolons:
+
+    r.New("1..3 step 0.5").Join(";", 2)
+
+## Features and limitations
+
+* Can handle very large ranges without storing the actual numbers in the ranges, but iterating over them may be slow.
+* Only `**` and `~` are supported for manipulating numbers in the range expressions. It can not handle addition, subtraction, parenthesis etc. It's not a general language, it's only a DSL for expressing ranges of integers or floating point numbers, with an optional step size.
+
+## Rangetype Syntax
+
+Expressions can optionally start with:
+
+* `[` for including the first value in the range, or
+* `(` for excluding the first value in the range
+
+And can end with:
+
+* `]` for including the last value in the range, or
+* `)` for excluding the last value in the range
+* `~` for subtracting 1 from the preceeding number
+
+The ranges can be Python-style:
+
+`[0:10]`
+
+Python-style with a step:
+
+`[1:20:-1]`
+
+Ruby-style:
+
+`1..10`
+
+Ruby-style with a step:
+
+`1..10 step 2`
+
+Or math-style:
+
+`[1,5)`
+
+## More examples
 
 ### Defining a SmallInt type and checking if a given number is valid
 
@@ -78,84 +176,16 @@ func main() {
 }
 ```
 
-# Syntax
-
-Expressions can optionally start with:
-
-* `[` for including the first value in the range, or
-* `(` for excluding the first value in the range
-
-And can end with:
-
-* `]` for including the last value in the range, or
-* `)` for excluding the last value in the range
-* `~` for subtracting 1 from the preceeding number
-
-An example of a range from 1 to 3 that includes both 1, 2 and 3 is:
-
-`[1,3]`
-
-The default is inclusive, so the above is the same as just:
-
-`1,3`
-
-Ranges inspired by Ruby also work:
-
-`1..3`
-
-These are also inclusive, unless a `(`, `)` or both are used. This will exclude `1` and `3` and keep only `2`:
-
-`(1..3)`
-
-Python style ranges are also supported, where the start value is inclusive and the end value is exclusive:
-
-`1:3`
-
-This is a range of only `1` and `2`, the `3` is excluded. However, this will include both `1` and `3`:
-
-`[1:3]`
-
-Adding an iteration step is also supported:
-
-`1..5 step 2`
-
-This is a range with the numbers `1`, `3` and `5`.
-
-Using the Python-style syntax also supports steps:
-
-`[3:1:-1]`
-
-This is `3`, `2`, `1`.
-
-Steps does not have to be integers:
-
-`[3:1:-0.1]`
-
-This steps from 3 (inclusive) down to 1 (inclusive) in step sizes of 0.1.
-
-Looping over a range can be done by providing a function that takes a `float64`:
-
-```
-r.New("1..10").ForEach(func(x float64) {
-  fmt.Println(int(x))
-})
-```
-
-Collecting integers to a comma separated string can be done with `Join`:
-
-    r.New("1..10").Join(", ", 0)
-
-Or for floats, with 2 digits after the period, separated by semicolons:
-
-    r.New("1..3 step 0.5").Join(";", 2)
-
----
-
-The functions `New` and `Slice` will just return a value, and may panic, while `New2` and `Slice2` will return an error value as well, and not panic.
-
 There are more examples in the `range_test.go` file.
 
----
+## Notes
 
-License: MIT
-Version: 0.1
+* `New2` and `Slice2` will return both a value and an error (if the expression failed to evaluate) and are the recommended functions to use.
+* `New` and `Slice` are fine to use for expressions that are already known to evaluate, but may panic if there are errors in the given expression.
+
+
+## General info
+
+* License: MIT
+* Version: 0.1
+* Author: Alexander F Rødseth &lt;xyproto@archlinux.org&gt;
