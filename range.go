@@ -165,9 +165,9 @@ func (r *Range) Find(x, threshold float64) (bool, float64) {
 // An expression may be consists of
 // floating point numbers, "**", "~" or "+".
 //
-// The operator presedence is undefined, and no paranthesis are supported yet.
+// The operator presedence is undefined, and no parenthesis are supported yet.
 //
-// If the expression ends with "~", -1 is substracted from the result
+// If the expression ends with "~", -1 is subtracted from the result
 //
 // Example expression:
 // > 10**2~
