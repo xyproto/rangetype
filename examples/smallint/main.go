@@ -7,20 +7,6 @@ import (
 )
 
 func main() {
-
-	// A byte type can be defined as for example "..2**8~"
-	// or just "0..255"
-
-	fmt.Println(" --- Byte ---")
-
-	fmt.Println("42 is a valid byte value?", r.Byte.Valid(42))
-	fmt.Println("256 is a valid byte value?", r.Byte.Valid(256))
-	fmt.Println("-0.2 is a valid byte value?", r.Byte.Valid(-0.2))
-
-	fmt.Printf("Storage required for a byte: %d-bit int\n", r.Byte.Bits())
-
-	fmt.Println(" --- SmallInt ---")
-
 	// Define a new type that can hold numbers from 0 up to and including 99
 	SmallInt := r.New("0..99")
 
@@ -42,5 +28,5 @@ func main() {
 	fmt.Printf("Storage required for SmallInt: a %d-bit int\n", SmallInt.Bits())
 
 	// All possible SmallInt values, comma separated:
-	fmt.Println("All possible values in SmallInt:\n" + SmallInt.Join(",", 0))
+	fmt.Println("All possible values for SmallInt:\n" + SmallInt.Join(",", 0))
 }

@@ -1,9 +1,49 @@
 # Rangetype
 
-A mini-language for ranges
+A mini-language for defining ranges.
 
-# Example
+The idea is to provide a DSL for defining and validating numeric types for implementations of programming languages.
 
+It can also be used for iterating over ranges, generating lists of numbers or slicing a given slice (like slices in Python).
+
+# Example 1 - defining a SmallInt type and checking if a given number is valid
+
+```go
+package main
+
+import (
+	"fmt"
+
+	r "github.com/xyproto/rangetype"
+)
+
+func main() {
+	// Define a new type that can hold numbers from 0 up to and including 99
+	SmallInt := r.New("0..99")
+
+	// Another way to define a number type from 0 up to and including 99
+	//SmallInt := New("10**2~")
+
+	// Another way to define a type from 0 up to and including 99
+	//SmallInt := New("[0,100)")
+
+	// Is 42 a valid SmallInt?
+	fmt.Println("0 is a valid SmallInt value:", SmallInt.Valid(0))
+	fmt.Println("2 is a valid SmallInt value:", SmallInt.Valid(2))
+	fmt.Println("-1 is a valid SmallInt value:", SmallInt.Valid(-1))
+	fmt.Println("99 is a valid SmallInt value:", SmallInt.Valid(99))
+	fmt.Println("100 is a valid SmallInt value:", SmallInt.Valid(100))
+
+	// How many integers are there room for?
+	fmt.Printf("SmallInt can hold %d different numbers.\n", SmallInt.Len())
+	fmt.Printf("Storage required for SmallInt: a %d-bit int\n", SmallInt.Bits())
+
+	// All possible SmallInt values, comma separated:
+	fmt.Println("All possible values for SmallInt:\n" + SmallInt.Join(",", 0))
+}
+```
+
+# Example 2 - slicing slices and looping with the ForEach method
 
 ```go
 package main
@@ -16,16 +56,16 @@ import (
 
 func main() {
 	// Outputs 1 to 10, with 0 digits after "."
-	fmt.Println(r.MustRange("1..10").Join(", ", 0))
+	fmt.Println(r.New("1..10").Join(", ", 0))
 
 	// Outputs 2 and 4
-	for _, x := range r.MustSlice([]float64{1.0, 2.0, 3.0, 4.0}, "1..3 step 2") {
+	for _, x := range r.Slice([]float64{1.0, 2.0, 3.0, 4.0}, "1..3 step 2") {
 		fmt.Print(x, " ")
 	}
 	fmt.Println()
 
 	// Also outputs 2 and 4
-	r.MustRange("(0:6:2)").ForEach(func(x float64) {
+	r.New("(0:6:2)").ForEach(func(x float64) {
 		fmt.Print(x, " ")
 	})
 	fmt.Println()
@@ -43,7 +83,7 @@ And can end with:
 
 * `]` for including the last value in the range, or
 * `)` for excluding the last value in the range
-* `~` for excluding the last value in the range (extracts 1 from the number)
+* `~` for subtracting 1 from the preceeding number
 
 An example of a range from 1 to 3 that includes both 1, 2 and 3 is:
 
@@ -90,24 +130,24 @@ This steps from 3 (inclusive) down to 1 (inclusive) in step sizes of 0.1.
 Looping over a range can be done by providing a function that takes a `float64`:
 
 ```
-rangetype.MustRange("1..10").ForEach(func(x float64) {
+r.New("1..10").ForEach(func(x float64) {
   fmt.Println(int(x))
 })
 ```
 
 Collecting integers to a comma separated string can be done with `Join`:
 
-    rangetype.MustRange("1..10").Join(", ", 0)
+    r.New("1..10").Join(", ", 0)
 
 Or for floats, with 2 digits after the period, separated by semicolons:
 
-    rangetype.MustRange("1..3 step 0.5").Join(";", 2)
+    r.New("1..3 step 0.5").Join(";", 2)
 
 ---
 
-The functions starting with `Must` returns no error and can panic, while the corresponding functions may return an error and does not panic.
+The functions `New` and `Slice` will just return a value, and may panic, while `New2` and `Slice2` will return an error value as well, and not panic.
 
-There are more examples in the `*_test.go` file.
+There are more examples in the `range_test.go` file.
 
 ---
 
