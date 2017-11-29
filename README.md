@@ -8,7 +8,9 @@ The idea is to provide a DSL for defining and validating numeric types for imple
 
 It can also be used for iterating over ranges, generating lists of numbers or slicing a given slice (like slices in Python).
 
-# Example 1 - defining a SmallInt type and checking if a given number is valid
+## Example 1
+
+### Defining a SmallInt type and checking if a given number is valid
 
 ```go
 package main
@@ -45,7 +47,9 @@ func main() {
 }
 ```
 
-# Example 2 - slicing slices and looping with the ForEach method
+## Example 2
+
+### Slicing slices and looping with the ForEach method
 
 ```go
 package main
