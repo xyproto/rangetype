@@ -135,9 +135,16 @@ Math-style with a step:
 
 `(5,1] step -0.1`
 
-Or with powers. Here's an expression for specifying a 16-bit unsigned integer:
+Or with powers. Here's an expression for specifying the range for a 16-bit unsigned integer:
 
-`..2**16~"`
+`..2**16~`
+
+This can be used for validating if a number fits the type:
+
+```go
+IntType := r.New("..2**16~")     // from 0 up to and including 65536-1
+IntType.Valid(42)                // true
+```
 
 ## More examples
 
