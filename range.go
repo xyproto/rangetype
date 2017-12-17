@@ -42,6 +42,12 @@ const (
 	RANGE_INCLUDE_START
 	RANGE_EXCLUDE_STOP
 	RANGE_INCLUDE_STOP
+
+	// Thanks https://groups.google.com/forum/#!msg/golang-nuts/a9PitPAHSSU/ziQw1-QHw3EJ
+	MaxUint = ^uint(0)
+	MinUint = 0
+	MaxInt = int(MaxUint >> 1)
+	MinInt = -MaxInt - 1
 )
 
 var (
@@ -160,6 +166,22 @@ func (r *Range) Find(x, threshold float64) (bool, float64) {
 	return found, foundValue
 }
 
+// Reverse a string
+// Thanks https://stackoverflow.com/a/10030772/131264
+func reverse(s string) string {
+    runes := []rune(s)
+    for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+        runes[i], runes[j] = runes[j], runes[i]
+    }
+    return string(runes)
+}
+
+// Split a string in two, but from the right side
+func rsplit(s, sep string) (string, string) {
+	elems := strings.SplitN(reverse(s), sep, 2)
+	return reverse(elems[1]), reverse(elems[0])
+}
+
 // Evaluate a simple expression
 //
 // An expression may be consists of
@@ -173,27 +195,80 @@ func (r *Range) Find(x, threshold float64) (bool, float64) {
 // > 10**2~
 // 99
 //
-func eval(exp string) (retval float64, err error) {
-	if exp == "" {
+// If "ada" is true, parenthesis are used to group expressions
+// instead of specifying exclusive ranges. The idea is to support range types like in Ada.
+//
+func eval(exp string, ada bool) (retval float64, err error) {
+	if strings.TrimSpace(exp) == "" {
 		// Return 0.0
 		return retval, nil
 	}
-	if strings.HasSuffix(exp, "~") {
-		// Evaluate the expression with "~" removed
+	if strings.HasPrefix(exp, "-") {
+		// Evaluate the expression with "-" removed
 		var v float64
-		if v, err = eval(exp[:len(exp)-1]); err != nil {
+		if v, err = eval(exp[1:len(exp)], ada); err != nil {
 			return v, err
 		}
-		// Return the result of the evaluated expression, but subtract 1
-		return v - 1, nil
+		// Return the result of the evaluated expression, but times -1
+		return -1 * v, nil
+	}
+	if ada {
+		if strings.TrimSpace(exp) == "-" {
+			return -1, nil
+		}
+		if strings.Count(exp, "(") != strings.Count(exp, ")") {
+			return retval, errors.New("Unbalanced expression: " + exp)
+		}
+		if strings.Contains(exp, "Integer'Last") {
+			exp = strings.Replace(exp, "Integer'Last", strconv.Itoa(MaxInt), -1) // 2**31-1 in Ada
+		}
+		//if strings.Contains(exp, "Integer'First") {
+		//	exp = strings.Replace(exp, "Integer'First", strconv.Itoa(-MinInt), -1) // Integer'First is 2**31 in Ada, but why?
+		//}
+		if strings.Count(exp, "(") > 0 && strings.Count(exp, ")") > 0 {
+			// There is a ( and a ), evaluate the expression in between and replace it
+			// with result of the evaluation.
+			elems := strings.SplitN(exp, "(", 2)
+			left := elems[0]
+			center, right := rsplit(elems[1], ")")
+			//fmt.Println("left center right", left, "|", center, "|", right)
+			centerResult, err := eval(center, ada)
+			if err != nil {
+				return retval, err
+			}
+			leftResult, err := eval(left, ada)
+			if err != nil {
+				return retval, err
+			}
+			rightResult, err := eval(right, ada)
+			if err != nil {
+				return retval, err
+			}
+			//fmt.Println("left result", leftResult)
+			//fmt.Println("center result", centerResult)
+			//fmt.Println("right result", rightResult)
+			//fmt.Println("total result:", leftResult + centerResult + rightResult)
+			return leftResult + centerResult + rightResult, nil
+		}
+	} else {
+		// Special syntax for ~ meaning -1
+		if strings.HasSuffix(exp, "~") {
+			// Evaluate the expression with "~" removed
+			var v float64
+			if v, err = eval(exp[:len(exp)-1], ada); err != nil {
+				return v, err
+			}
+			// Return the result of the evaluated expression, but subtract 1
+			return v - 1, nil
+		}
 	}
 	if strings.Count(exp, "**") > 0 {
 		elements := strings.SplitN(exp, "**", 2)
 		var a, b float64
-		if a, err = eval(elements[0]); err != nil {
+		if a, err = eval(elements[0], ada); err != nil {
 			return retval, errors.New("INVALID VALUE: " + elements[0] + " IN " + err.Error())
 		}
-		if b, err = eval(elements[1]); err != nil {
+		if b, err = eval(elements[1], ada); err != nil {
 			return retval, errors.New("INVALID VALUE: " + elements[1] + " IN " + err.Error())
 		}
 		retval += math.Pow(a, b)
@@ -201,13 +276,24 @@ func eval(exp string) (retval float64, err error) {
 	} else if strings.Count(exp, "+") > 0 {
 		elements := strings.SplitN(exp, "+", 2)
 		var a, b float64
-		if a, err = eval(elements[0]); err != nil {
+		if a, err = eval(elements[0], ada); err != nil {
 			return retval, errors.New("INVALID VALUE: " + elements[0] + " IN " + err.Error())
 		}
-		if b, err = eval(elements[1]); err != nil {
+		if b, err = eval(elements[1], ada); err != nil {
 			return retval, errors.New("INVALID VALUE: " + elements[1] + " IN " + err.Error())
 		}
 		retval += a + b
+		return
+	} else if strings.Count(exp, "-") > 0 {
+		elements := strings.SplitN(exp, "-", 2)
+		var a, b float64
+		if a, err = eval(elements[0], ada); err != nil {
+			return retval, errors.New("INVALID VALUE: " + elements[0] + " IN " + err.Error())
+		}
+		if b, err = eval(elements[1], ada); err != nil {
+			return retval, errors.New("INVALID VALUE: " + elements[1] + " IN " + err.Error())
+		}
+		retval += a - b
 		return
 	}
 	var x float64
@@ -218,8 +304,18 @@ func eval(exp string) (retval float64, err error) {
 	return
 }
 
-// New2 evaluates the given input string and returns a Range struct
+// NewAda evaluates an Ada range type
+func NewAda2(adaRangeType string) (*Range, error) {
+	return NewRange(adaRangeType, true)
+}
+
+// New2 evaluates the given input string and returns a Range struct and an error
 func New2(rangeExpression string) (*Range, error) {
+	return NewRange(rangeExpression, false)
+}
+
+// NewRange evaluates the given input string and returns a Range struct
+func NewRange(rangeExpression string, ada bool) (*Range, error) {
 	var (
 		r           = &Range{step: 1.0}
 		contents    string
@@ -227,7 +323,7 @@ func New2(rangeExpression string) (*Range, error) {
 		left, right string
 		step        string
 	)
-	// If the input string contains (" step "), remove the last part
+	// If the input string contains " step ", remove the last part
 	if strings.Contains(rangeExpression, " step ") {
 		elements := strings.SplitN(rangeExpression, " step ", 2)
 		rangeExpression = elements[0]
@@ -248,11 +344,19 @@ func New2(rangeExpression string) (*Range, error) {
 			r.rangeType |= RANGE_INCLUDE_STOP
 			r.rangeType &= ^RANGE_EXCLUDE_STOP
 		case '(':
-			r.rangeType |= RANGE_EXCLUDE_START
-			r.rangeType &= ^RANGE_INCLUDE_START
+			if ada {
+				contents += string(c)
+			} else {
+				r.rangeType |= RANGE_EXCLUDE_START
+				r.rangeType &= ^RANGE_INCLUDE_START
+			}
 		case ')':
-			r.rangeType |= RANGE_EXCLUDE_STOP
-			r.rangeType &= ^RANGE_INCLUDE_STOP
+			if ada {
+				contents += string(c)
+			} else {
+				r.rangeType |= RANGE_EXCLUDE_STOP
+				r.rangeType &= ^RANGE_INCLUDE_STOP
+			}
 		default:
 			contents += string(c)
 		}
@@ -260,8 +364,8 @@ func New2(rangeExpression string) (*Range, error) {
 	if strings.Count(contents, "..") == 1 {
 		// Ruby style range with ".."
 		elements := strings.SplitN(contents, "..", 2)
-		left = elements[0]
-		right = elements[1]
+		left = strings.TrimSpace(elements[0])
+		right = strings.TrimSpace(elements[1])
 		// Set both to inclusive, if not already set to exclusive in the switch above
 		if (r.rangeType & RANGE_EXCLUDE_START) == 0 { // check if NOT set
 			r.rangeType |= RANGE_INCLUDE_START
@@ -317,19 +421,19 @@ func New2(rangeExpression string) (*Range, error) {
 	if left == "" {
 		// If the left side is missing, use 0
 		r.from = 0.0
-	} else if r.from, err = eval(left); err != nil {
+	} else if r.from, err = eval(left, ada); err != nil {
 		return nil, errors.New("INVALID RANGE VALUE: " + step + ", " + err.Error())
 	}
 
 	// Right side of the range expression
 	if right == "" {
 		return nil, ErrMissingRange
-	} else if r.to, err = eval(right); err != nil {
+	} else if r.to, err = eval(right, ada); err != nil {
 		return nil, errors.New("INVALID RANGE VALUE: " + step + ", " + err.Error())
 	}
 
 	if step != "" {
-		if r.step, err = eval(step); err != nil {
+		if r.step, err = eval(step, ada); err != nil {
 			return nil, errors.New("INVALID STEP SIZE: " + step + ", " + err.Error())
 		}
 	}
@@ -496,6 +600,15 @@ func (r *Range) ForN(n int, f func(float64)) {
 	}
 }
 
+// NewAda is the same as NewAda2, but panics if given an invalid input string
+func NewAda(adaRangedType string) *Range {
+	if r, err := NewAda2(adaRangedType); err != nil {
+		panic(err)
+	} else {
+		return r
+	}
+}
+
 // New is the same as New2, but panics if given an invalid input string
 func New(rangeExpression string) *Range {
 	if r, err := New2(rangeExpression); err != nil {
@@ -597,20 +710,26 @@ func (r *Range) Sum() float64 {
 
 // Len returns the length of the range by iterating over it!
 // May get stuck if the range is impossibly large.
-func (r *Range) Len64() uint64 {
+func (r *Range) Len64() float64 {
+	if (r.step == 1.0) {
+		return max(r.from, r.to) - min(r.from, r.to)
+	}
 	// TODO: Optimize for ranges where there is no need to actually iterate
 	var counter uint64
 	r.ForEach(func(_ float64) {
 		counter++
 	})
-	return counter
+	return float64(counter)
 }
 
 // Len returns the length of the range by iterating over it!
 // May get stuck if the range is impossibly large.
-func (r *Range) Len() int {
-	// TODO: Optimize for ranges where there is no need to actually iterate
-	var counter int
+func (r *Range) Len() uint {
+	if (r.step == 1.0) {
+		return uint(max(r.from, r.to) - min(r.from, r.to))
+	}
+	// TODO: Optimize for additional ranges where there is no need to actually iterate
+	var counter uint
 	r.ForEach(func(_ float64) {
 		counter++
 	})
@@ -621,3 +740,45 @@ func (r *Range) Len() int {
 func (r *Range) Bits() int {
 	return int(math.Ceil(math.Log2(float64(r.Len()))))
 }
+
+// The following functions work, but is a bit unintuitive.
+
+//func (r *Range) FromIncluding() float64 {
+//	if (r.rangeType & RANGE_INCLUDE_START) != 0 {
+//		return r.from
+//	} else {
+//		// The type of the "from" value is "excluding",
+//		// but we want the "including" value, so subtract a step
+//		return r.from - r.step
+//	}
+//}
+//
+//func (r *Range) FromExcluding() float64 {
+//	if (r.rangeType & RANGE_EXCLUDE_START) != 0 {
+//		return r.from
+//	} else {
+//		// The type of the "from" value is "include",
+//		// but we want the "excluding" value, so add a step
+//		return r.from + r.step
+//	}
+//}
+//
+//func (r *Range) ToIncluding() float64 {
+//	if (r.rangeType & RANGE_INCLUDE_STOP) != 0 {
+//		return r.to
+//	} else {
+//		// The type of the "to" value is "excluding",
+//		// but we want the "including" value, so add a step
+//		return r.to + r.step
+//	}
+//}
+//
+//func (r *Range) ToExcluding() float64 {
+//	if (r.rangeType & RANGE_EXCLUDE_STOP) != 0 {
+//		return r.to
+//	} else {
+//		// The type of the "to" value is "including",
+//		// but we want the "excluding" value, so subtract a step
+//		return r.to - r.step
+//	}
+//}

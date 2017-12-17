@@ -137,13 +137,13 @@ func TestByteTypes(t *testing.T) {
 }
 
 func TestMinusOneOperator(t *testing.T) {
-	result, err := eval("10**2~")
+	result, err := eval("10**2~", false)
 	assert.Equal(t, err, nil)
 	assert.Equal(t, result, 99.0)
 
 	r, err := New2("[1~..4~~**2)") // From 0 up to, but not including, 4
 	assert.Equal(t, err, nil)
-	assert.Equal(t, r.Len(), 4)
+	assert.Equal(t, r.Len(), uint(4))
 
 	IntType := New("..2**16~") // from 0 up to and including 65536-1
 	assert.Equal(t, IntType.Valid(42), true)
@@ -171,4 +171,36 @@ func TestFloatBits(t *testing.T) {
 	// 17 possible values, should still fit in a 5 bit number
 	SmallFloat3 := New("[0..1.7) step 0.1") // same as [0:1.7:0.1]
 	assert.Equal(t, SmallFloat3.Bits(), 5)
+}
+
+func TestSmallInt(t *testing.T) {
+	Integer8 := New("-2**7 .. 2**7~")
+	assert.Equal(t, Integer8.Valid(100), true)
+}
+
+func TestRsplit(t *testing.T) {
+	s := "abc (123 (abc) cheese) asdf"
+	_, right := rsplit(s, ")")
+	assert.Equal(t, right, " asdf")
+}
+
+func TestAda(t *testing.T) {
+	Integer8 := NewAda("-(2**7) .. (2**7)-1")
+	assert.Equal(t, Integer8.Valid(100), true)
+
+	TinyType := NewAda("-5 .. 10")
+	l := TinyType.All()
+	assert.Equal(t, l[0], -5.0)
+	assert.Equal(t, l[1], -4.0)
+	assert.Equal(t, l[5], 0.0)
+	assert.Equal(t, l[14], 9.0)
+	assert.Equal(t, l[len(l)-1], 10.0)
+
+	Short := NewAda("-128 .. +127")
+	l = Short.All()
+	assert.Equal(t, l[0], -128.0)
+	assert.Equal(t, l[len(l)-1], 127.0)
+
+	Integer := NewAda("0 .. Integer'Last")
+	assert.Equal(t, Integer.Len64(), float64(MaxInt))
 }
