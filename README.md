@@ -34,7 +34,7 @@ r.New("1..3 step 0.5").Join(";", 2)
 
 ## Features and limitations
 
-* Can handle very large ranges without storing the actual numbers in the ranges, but iterating over them may be slow.
+* Can handle very large ranges without storing the actual numbers in the ranges, but iterating over large ranges may be slow.
 * Only `**` and `~` are supported for manipulating numbers in the range expressions. It can not handle addition, subtraction, parenthesis etc. It's not a general language, it's only a DSL for expressing ranges of integers or floating point numbers, with an optional step size.
 
 ## Syntax
