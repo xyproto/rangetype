@@ -8,64 +8,6 @@ The idea is to provide a DSL for defining and validating numeric types for imple
 
 It can also be used for iterating over ranges, generating lists of numbers or slicing a given slice (like slices in Python).
 
-## Sample syntax
-
-An int with a range from 1 to 3 that includes both 1, 2 and 3:
-
-`1,3`
-
-A float with a range from 1 to 3 that includes 1.0, 1.1 etc up to 3.0:
-
-`1,3 step 0.1`
-
-Inclusivity is specified with square brackets:
-
-`[1,3]`
-
-Exclusivity is specified with parenthesis:
-
-`(1,3)`
-
-Ranges inspired by Ruby also work:
-
-`1..3`
-
-These are inclusive, unless parenthesis are used.
-
-Ruby-style range which will exclude `1` and `3` and only keep `2`:
-
-`(1..3)`
-
-Python style ranges are also supported, where the start value is inclusive and the end value is exclusive:
-
-`1:3`
-
-Adding square brackets makes the range inclusive:
-
-`[1:3]`
-
-Brackets and parenthesis does not have to be balanced. This works too:
-
-`1:3]`
-
-Adding an iteration step is also possible:
-
-`1..5 step 2`
-
-This is a range with the numbers `1`, `3` and `5`.
-
-The Python-style syntax also supports steps:
-
-`[3:1:-1]`
-
-This is `3`, `2`, `1`.
-
-Steps does not have to be integers:
-
-`[3:1:-0.1]`
-
-This steps from 3 (inclusive) down to 1 (inclusive) in step sizes of 0.1.
-
 ## ForEach
 
 Looping over a range can be done by providing a function that takes a `float64`:
@@ -133,6 +75,10 @@ Math-style:
 
 Math-style with a step:
 
+`[1,5) step 2`
+
+Math-style with negative steps:
+
 `(5,1] step -0.1`
 
 Here's an expression for specifying the range for a 16-bit unsigned integer:
@@ -153,6 +99,66 @@ This can be used for validating if a given number fits a 16-bit unsigned type:
 IntType := r.New("..2**16~")     // from 0 up to and including 65536-1
 IntType.Valid(42)              // true
 ```
+
+## Examples
+
+An int with a range from 1 to 3 that includes both 1, 2 and 3:
+
+`1,3`
+
+A float with a range from 1 to 3 that includes 1.0, 1.1 etc up to 3.0:
+
+`1,3 step 0.1`
+
+Inclusivity is specified with square brackets:
+
+`[1,3]`
+
+Exclusivity is specified with parenthesis:
+
+`(1,3)`
+
+Ranges inspired by Ruby also work:
+
+`1..3`
+
+These are inclusive, unless parenthesis are used.
+
+Ruby-style range which will exclude `1` and `3` and only keep `2`:
+
+`(1..3)`
+
+Python style ranges are also supported, where the start value is inclusive and the end value is exclusive:
+
+`1:3`
+
+Adding square brackets makes the range inclusive:
+
+`[1:3]`
+
+Brackets and parenthesis does not have to be balanced. This works too:
+
+`1:3]`
+
+Adding an iteration step is also possible:
+
+`1..5 step 2`
+
+This is a range with the numbers `1`, `3` and `5`.
+
+The Python-style syntax also supports steps:
+
+`[3:1:-1]`
+
+This is `3`, `2`, `1`.
+
+Steps does not have to be integers:
+
+`[3:1:-0.1]`
+
+This steps from 3 (inclusive) down to 1 (inclusive) in step sizes of 0.1.
+
+
 
 ## More examples
 
