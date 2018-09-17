@@ -14,7 +14,7 @@ Looping over a range can be done by providing a function that takes a `float64`:
 
 ```go
 r.New("1..10").ForEach(func(x float64) {
-  fmt.Println(int(x))
+	fmt.Println(int(x))
 })
 ```
 
@@ -31,11 +31,6 @@ Or for floats, with 2 digits after the period, separated by semicolons:
 ```go
 r.New("1..3 step 0.5").Join(";", 2)
 ```
-
-## Features and limitations
-
-* Can handle very large ranges without storing the actual numbers in the ranges, but iterating over large ranges may be slow.
-* Only `**` and `~` are supported for manipulating numbers in the range expressions. It can not handle addition, subtraction, parenthesis etc. It's not a general language, it's only a DSL for expressing ranges of integers or floating point numbers, with an optional step size.
 
 ## Syntax
 
@@ -159,8 +154,7 @@ Steps does not have to be integers:
 This steps from 3 (inclusive) down to 1 (inclusive) in step sizes of 0.1.
 
 
-
-## More examples
+## More Examples
 
 ### Defining a SmallInt type and checking if a given number is valid
 
@@ -232,13 +226,18 @@ func main() {
 
 There are more examples in the `range_test.go` file.
 
-## Notes
+## Features and Limitations
+
+* Can handle very large ranges without storing the actual numbers in the ranges, but iterating over large ranges may be slow.
+* Only `**` and `~` are supported for manipulating numbers in the range expressions.
+* It's not a general language, it's only a DSL for expressing ranges of integers or floating point numbers, with an optional step size.
+
+## Error Handling
 
 * `New2` and `Slice2` will return both a value and an error (if the expression failed to evaluate) and are the recommended functions to use.
 * `New` and `Slice` are fine to use for expressions that are already known to evaluate, but may panic if there are errors in the given expression.
 
-
-## General info
+## General Info
 
 * License: MIT
 * Version: 0.1
