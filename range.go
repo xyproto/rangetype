@@ -46,8 +46,8 @@ const (
 	// Thanks https://groups.google.com/forum/#!msg/golang-nuts/a9PitPAHSSU/ziQw1-QHw3EJ
 	MaxUint = ^uint(0)
 	MinUint = 0
-	MaxInt = int(MaxUint >> 1)
-	MinInt = -MaxInt - 1
+	MaxInt  = int(MaxUint >> 1)
+	MinInt  = -MaxInt - 1
 )
 
 var (
@@ -169,11 +169,11 @@ func (r *Range) Find(x, threshold float64) (bool, float64) {
 // Reverse a string
 // Thanks https://stackoverflow.com/a/10030772/131264
 func reverse(s string) string {
-    runes := []rune(s)
-    for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
-        runes[i], runes[j] = runes[j], runes[i]
-    }
-    return string(runes)
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
 }
 
 // Split a string in two, but from the right side
@@ -711,7 +711,7 @@ func (r *Range) Sum() float64 {
 // Len returns the length of the range by iterating over it!
 // May get stuck if the range is impossibly large.
 func (r *Range) Len64() float64 {
-	if (r.step == 1.0) {
+	if r.step == 1.0 {
 		return max(r.from, r.to) - min(r.from, r.to)
 	}
 	// TODO: Optimize for ranges where there is no need to actually iterate
@@ -725,7 +725,7 @@ func (r *Range) Len64() float64 {
 // Len returns the length of the range by iterating over it!
 // May get stuck if the range is impossibly large.
 func (r *Range) Len() uint {
-	if (r.step == 1.0) {
+	if r.step == 1.0 {
 		return uint(max(r.from, r.to) - min(r.from, r.to))
 	}
 	// TODO: Optimize for additional ranges where there is no need to actually iterate
